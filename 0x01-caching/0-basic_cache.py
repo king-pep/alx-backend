@@ -1,28 +1,18 @@
 #!/usr/bin/python3
-"""
-    BaseCache module
-"""
-
+"""  Basic dictionary """
 from base_caching import BaseCaching
 
+
 class BasicCache(BaseCaching):
-    """ BasicCache defines an intro to use cache """
+    """ Class that inherits from BaseCaching and is a caching system
+        This caching system doesn’t have limit """
     def put(self, key, item):
-        """ Modify cache data """
-        if key is not None and item is not None:
+        """ Assign to the dictionary """
+        if key and item:
             self.cache_data[key] = item
-        elif key in self.cache_data and item is None:
-            del self.cache_data[key]
 
     def get(self, key):
-        """ Retrieve value from cache data """
-        if key is not None and key in self.cache_data:
-            return self.cache_data[key]
-        return None
-
-    def print_cache(self):
-        """ Display current cache content """
-        print("Current cache:")
-        for key, value in self.cache_data.items():
-            print(f"{key}: {value}")
-
+        """ Return the value linked """
+        if key is None or self.cache_data.get(key) is None:
+            return None
+        return self.cache_data.get(key)
