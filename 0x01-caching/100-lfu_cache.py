@@ -3,6 +3,7 @@
 
 from base_caching import BaseCaching
 from collections import defaultdict
+import heapq
 
 class LFUCache(BaseCaching):
     """ LFUCache defines a caching system using LFU algorithm """
@@ -12,12 +13,13 @@ class LFUCache(BaseCaching):
         super().__init__()
         self.frequency = defaultdict(int)  # Track item frequency
         self.usage_count = 0  # Track the access time (LRU)
+        self.min_heap = []  # Priority queue to keep track of items by frequency and LRU
 
-    def update_frequency(self, key, hit):
-        """ Update the frequency and usage_count for a key """
+    def update_frequency(self, key):
+        """ Update the frequency for a key """
         self.frequency[key] += 1
-        if hit:
-            self.usage_count += 1
+        self.usage_count += 1
+        heapq.heappush(self.min_heap, (self.frequency[key], self.usage_count, key))
 
     def put(self, key, item):
         """ Modify cache data with LFU algorithm """
@@ -26,32 +28,24 @@ class LFUCache(BaseCaching):
 
         # Check if cache limit is reached
         if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
-            # Find the least frequency used item(s)
-            min_frequency = min(self.frequency.values())
-            least_frequency_items = [k for k, v in self.frequency.items() if v == min_frequency]
-
-            # If there is more than one item with the least frequency,
-            # use LRU to break the tie
-            if len(least_frequency_items) > 1:
-                least_recently_used_item = min(least_frequency_items, key=lambda k: self.usage_count - self.frequency[k])
-            else:
-                least_recently_used_item = least_frequency_items[0]
-
-            # Discard the least frequency used item
-            print(f"DISCARD: {least_recently_used_item}")
-            del self.cache_data[least_recently_used_item]
-            del self.frequency[least_recently_used_item]
+            while self.min_heap:
+                _, _, discard_key = heapq.heappop(self.min_heap)
+                if discard_key in self.cache_data:
+                    del self.cache_data[discard_key]
+                    del self.frequency[discard_key]
+                    break
 
         # Add the new item to the cache
         if key in self.cache_data:
-            self.update_frequency(key, False)  # Existing key (update only frequency)
-        self.cache_data[key] = item
-        self.update_frequency(key, True)  # Successful cache put (update frequency and usage_count)
+            self.cache_data[key] = item
+        else:
+            self.cache_data[key] = item
+            self.update_frequency(key)
 
     def get(self, key):
         """ Retrieve value from cache data """
         if key is not None and key in self.cache_data:
-            self.update_frequency(key, True)  # Successful cache hit (update frequency and usage_count)
+            self.update_frequency(key)  # Successful cache hit (update frequency)
             return self.cache_data[key]
         return None
 
