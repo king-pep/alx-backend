@@ -13,10 +13,11 @@ class LFUCache(BaseCaching):
         self.frequency = defaultdict(int)  # Track item frequency
         self.usage_count = 0  # Track the access time (LRU)
 
-    def update_frequency(self, key):
-        """ Update the frequency of a key """
+    def update_frequency(self, key, hit):
+        """ Update the frequency and usage_count for a key """
         self.frequency[key] += 1
-        self.usage_count += 1
+        if hit:
+            self.usage_count += 1
 
     def put(self, key, item):
         """ Modify cache data with LFU algorithm """
@@ -42,13 +43,15 @@ class LFUCache(BaseCaching):
             del self.frequency[least_recently_used_item]
 
         # Add the new item to the cache
+        if key in self.cache_data:
+            self.update_frequency(key, False)  # Existing key (update only frequency)
         self.cache_data[key] = item
-        self.update_frequency(key)
+        self.update_frequency(key, True)  # Successful cache put (update frequency and usage_count)
 
     def get(self, key):
         """ Retrieve value from cache data """
         if key is not None and key in self.cache_data:
-            self.update_frequency(key)
+            self.update_frequency(key, True)  # Successful cache hit (update frequency and usage_count)
             return self.cache_data[key]
         return None
 
