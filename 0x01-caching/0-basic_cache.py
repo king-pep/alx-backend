@@ -11,6 +11,8 @@ class BasicCache(BaseCaching):
         """ Modify cache data """
         if key is not None and item is not None:
             self.cache_data[key] = item
+        elif key in self.cache_data and item is None:
+            del self.cache_data[key]
 
     def get(self, key):
         """ Retrieve value from cache data """
